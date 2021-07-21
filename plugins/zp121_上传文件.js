@@ -69,7 +69,7 @@ $plugin({
     }, {
         prop: "label",
         type: "text",
-        label: "[上传文件]文本"
+        label: "【上传文件】文本"
     }],
     render,
     css
