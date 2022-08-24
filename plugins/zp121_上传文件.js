@@ -27,7 +27,7 @@ function onChange(ref, e) {
             },
             onSuccess: r => {
                 ref.setForm(props.dbf, r.url)
-                if (props.onSuccess) exc(props.onSuccess, { ...ref.ctx, $ext: ref.ctx, ...r }, () => ref.exc("render()"))
+                if (props.onSuccess) exc(props.onSuccess, { ...ref.ctx, $ext_ctx: ref.ctx, ...r }, () => ref.exc("render()"))
                 delete ref.progress
                 delete ref.file
                 ref.render()
