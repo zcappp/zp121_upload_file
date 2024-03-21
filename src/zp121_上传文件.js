@@ -1,12 +1,14 @@
 import React from "react"
 
 function render(ref) {
-    if (!ref.props.dbf) return <div>请配置表单字段</div>
-    let file = ref.getForm(ref.props.dbf)
+    const { props, getForm } = ref
+    if (!getForm) return <div>请置于表单容器中</div>
+    if (!props.dbf) return <div>请配置表单字段</div>
+    let file = getForm(props.dbf)
     if (file) file = file.split("/")[file.split("/").length - 1]
     return <React.Fragment>
         <input onChange={e => onChange(ref, e)} type="file"/>
-        <button onClick={e => ref.container.firstChild.click()} className="zbtn zellipsis">{svg}&nbsp;{ref.file || file || ref.props.label || "上传文件"}{ref.progress && <i>{ref.progress}</i>}</button>
+        <button onClick={e => ref.container.firstChild.click()} className="zbtn zellipsis">{svg}&nbsp;{ref.file || file || props.label || "上传文件"}{ref.progress && <i>{ref.progress}</i>}</button>
     </React.Fragment>
 }
 
@@ -14,7 +16,7 @@ function onChange(ref, e) {
     const { exc, props } = ref
     const file = e.target.files[0]
     if (!file || !file.name) return exc('warn("请选择文件文件")')
-    if (file.size / 1048576 > (ref.props.max || 5)) return exc(`warn("文件太大, 请压缩至${ref.props.max || 5}M以下")`)
+    if (file.size / 1048576 > (props.max || 5)) return exc(`warn("文件太大, 请压缩至${props.max || 5}M以下")`)
     ref.file = file.name
     ref.progress = "0%"
     ref.render()
@@ -63,7 +65,8 @@ $plugin({
     }, {
         prop: "onSuccess",
         type: "exp",
-        label: "onSuccess表达式"
+        label: "onSuccess表达式",
+        ph: "$val"
     }, {
         prop: "max",
         type: "number",
