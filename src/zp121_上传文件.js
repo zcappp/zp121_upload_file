@@ -1,14 +1,22 @@
 import React from "react"
 
 function render(ref) {
-    const { props, getForm } = ref
-    if (!getForm) return <div>请置于表单容器中</div>
-    if (!props.dbf) return <div>请配置表单字段</div>
-    let file = getForm(props.dbf)
-    if (file) file = file.split("/")[file.split("/").length - 1]
+    let { dbf, form } = ref.props
+    let file
+    if (form) {
+        ref.form = typeof form == "string" ? ref.excA(form) : form
+        if (typeof ref.form == "object") file = ref.form[dbf]
+    } else if (ref.getForm) {
+        file = ref.getForm(dbf)
+    }
     return <React.Fragment>
         <input onChange={e => onChange(ref, e)} type="file"/>
-        <button onClick={e => ref.container.firstChild.click()} className="zbtn zellipsis">{svg}&nbsp;{ref.file || file || props.label || "上传文件"}{ref.progress && <i>{ref.progress}</i>}</button>
+        <button onClick={e => ref.container.firstChild.click()} className="zbtn zellipsis">
+            {svg}&nbsp;{ref.file || (file ? file.split("/")[file.split("/").length - 1] : "") || ref.props.label || "上传文件"}
+            {ref.progress && <i>{ref.progress}</i>}
+            {file && <a href={file} onClick={e => e.stopPropagation()} target="_blank" className="zarrow zhover"/>}
+            {file && <span onClick={e => {e.stopPropagation(); ref.form ? delete ref.form[dbf] : ref.setForm(dbf, ""); ref.exc('render()')}} className="zdel zhover"/>}
+        </button>
     </React.Fragment>
 }
 
@@ -28,7 +36,7 @@ function onChange(ref, e) {
                 ref.render()
             },
             onSuccess: r => {
-                ref.setForm(props.dbf, r.url)
+                ref.form ? ref.form[props.dbf] = r.url : ref.setForm(props.dbf, r.url)
                 if (props.onSuccess) exc(props.onSuccess, { ...ref.ctx, $ext_ctx: ref.ctx, $val: r.url, ...r }, () => ref.exc("render()"))
                 delete ref.progress
                 delete ref.file
@@ -48,11 +56,26 @@ const css = `
 .zp121 .zbtn {
     max-width: 450px;
 }
+.zp121 .zsvg {
+    color: gray;
+}
 .zp121 i {
     position: absolute;
     background: darkgrey;
     left: 0;
     width: 40px;
+}
+.zp121 .zhover {
+    color: silver;
+}
+.zp121 .zdel {
+    padding: .5em 0;
+}
+.zdesktop .zp121 .zhover {
+    display: none;
+}
+.zdesktop .zp121:hover .zhover {
+    display: inline-flex;
 }
 `
 
@@ -60,13 +83,12 @@ $plugin({
     id: "zp121",
     props: [{
         prop: "dbf",
-        type: "text",
-        label: "表单字段"
+        label: "字段名",
+        ph: "必填"
     }, {
-        prop: "onSuccess",
-        type: "exp",
-        label: "onSuccess表达式",
-        ph: "$val"
+        prop: "form",
+        label: "字段容器",
+        ph: "如不填则使用祖先节点的表单容器"
     }, {
         prop: "max",
         type: "number",
@@ -74,8 +96,12 @@ $plugin({
         ph: "默认最大5MB"
     }, {
         prop: "label",
-        type: "text",
-        label: "【上传文件】文本"
+        label: "[上传文件] 文本"
+    }, {
+        prop: "onSuccess",
+        type: "exp",
+        label: "上传成功表达式",
+        ph: "$val"
     }],
     render,
     css
